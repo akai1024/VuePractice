@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>PokerCardGame</title>
+		<script src="https://unpkg.com/vue/dist/vue.min.js"></script>
+		<link rel="stylesheet" href="assets/css/main.css" />
+	</head>
+	<body>
+		<div id="table">
+			<div>{{welcomeWords}}</div>
+			<button v-on:click="createNewDeck">CreateNewDeck</button>
+			<button v-on:click="shuffleDeck">ShuffleDeck</button>
+			<br />
+			
+			<template v-for="card in cardDeck" :key="card.id">
+				<!-- <button class="special small" style="width: 200px;">{{card.getCardInfo()}}</button> -->
+				<img :src="card.getCardSuitPic()" style="float: left; margin: 15px;"/>
+				<div style="font-size: 50px;">{{card.getNumberShowForm()}} ({{card.id}})</div>
+				<br />
+			</template>
+
+		</div>
+		<script type="text/javascript" src="js/PokerCard.js"></script>
+		<script type="text/javascript" src="js/Table.js"></script>
+	</body>
+</html>
