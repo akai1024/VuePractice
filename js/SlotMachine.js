@@ -1,187 +1,269 @@
 var slotMachine = new Vue({
-  el: '#SlotMachine',
-  data: {
-    // 每注金額
-    eachBet: 10,
-    // 最大下注額
-    maxBet: 200,
+	el: '#SlotMachine',
+	data: {
+		eachBet: 10,
+		maxBet: 200,
 
-    // 下注額
-    bet: 10,
-    // 當前金額
-    totalMoney: 1000,
-    // 總贏錢
-    totalWin: 0,
-    // 總下注
-    totalBet: 0,
-    // 貸款金額
-    loan: 0,
+		bet: 10,
+		win: 0,
+		totalMoney: 1000,
+		totalWin: 0,
+		totalBet: 0,
+		loan: 0,
 
-    // 排列帶相關資訊
-    ribbonSize: 3,
-    ribbonLength: 3,
-    // 圖標
-    symbols: [
-    [1, 'A'],
-    [2, 'K'],
-    [3, 'Q'],
-    [4, 'J'],
-    [5, '10'],
-    [6, '9'],
-    ],
-    // 圖標賠率
-    symbolOdds:[
-    ['1-3', 15],
-    ['2-3', 8],
-    ['3-3', 5],
-    ['4-3', 3],
-    ['5-3', 1],
-    ['6-3', 1],
-    ],
-    // 中獎線位置
-    bingoIndex: [
-    [0,1,2],
-    [0,4,8],
-    [3,4,5],
-    [6,4,2],
-    [6,7,8],
-    ],
-    // 當前排列帶
-    ribbons:[
-    [1,1,1],
-    [1,1,1],
-    [1,1,1],
-    ],
-  },
-  methods: {
-    // 將顯示的內文轉成人看的
-    getSymbolText: function(symbol){
-      for(var idx = 0; idx < this.symbols.length; idx++){
-        var symbolNum = this.symbols[idx][0];
-        if(symbolNum == symbol){
-          return this.symbols[idx][1];
-        }
-      }
-      return 'unknown';
-    },
-    // 設定下注
-    setBet: function() {
-      if(this.bet >= this.maxBet){
-        this.bet = this.eachBet;
-      } else {
-        this.bet += this.eachBet;
-      }
-    },
-    // 增加金額（貸款）
-    addMoney: function() {
-      this.loan += 1000;
-      this.totalMoney += 1000;
-    },
-    // 下注扣錢
-    subBet: function(){
-      this.totalMoney -= this.bet;
-    },
-    // 增加贏錢
-    addWin: function(win) {
-      if(win <= 0){
-        return;
-      }
-      this.totalWin += win;
-      this.totalMoney += win;
-    },
-    // 轉動
-    spin: function() {
-      if(this.totalMoney < this.bet){
-        alert('Not enough money');
-        return;
-      } else {
-        this.subBet();
-      }
+		// 排列帶相關資訊
+		ribbonSize: 3,
+		ribbonLength: 3,
+		// 圖標
+		symbols: [
+			[1, 'A'],
+			[2, 'K'],
+			[3, 'Q'],
+			[4, 'J'],
+			[5, '10'],
+			[6, '9'],
+		],
+		// 圖標賠率
+		symbolOdds: [
+			['1-3', 15],
+			['2-3', 10],
+			['3-3', 8],
+			['4-3', 5],
+			['5-3', 3],
+			['6-3', 1],
+		],
+		// 中獎線位置
+		bingoIndex: [
+			[0, 1, 2],
+			[0, 4, 8],
+			[3, 4, 5],
+			[6, 4, 3],
+			[6, 7, 8],
+		],
+		// 當前排列帶
+		ribbons: [
+			[1, 1, 1],
+			[1, 1, 1],
+			[1, 1, 1],
+		],
+		// 該局最終盤面
+		screen: [],
 
-      this.totalBet += this.bet;
-      this.addWin(this.calculateScreen());
-    },
-    // 計算盤面
-    calculateScreen: function(){
-      console.log('calculateScreen...')
-      var win = 0;
+		// 是否正在演出
+		isAnimation: false,
+		// 動畫計時器
+		animationTimer: null,
+		// 動畫間隔
+		animationTickGap: 100,
+		// 當前動畫的ticker
+		animationTicker: 0,
+		// 動畫時間長度
+		animationLength: 1500,
+		// 快速轉輪
+		isFastSpin: false,
+	},
+	created() {
+		window.addEventListener('keypress', this.keyPressEvt);
+	},
+	destroyed() {
+		window.removeEventListener('keypress', this.keyPressEvt);
+	},
+	methods: {
+		// 鍵盤事件
+		keyPressEvt: function(e) {
+			// SpaceBar
+			if (e.keyCode == 32) {
+				this.spin();
+			}
+		},
+		// 設定下注
+		setBet: function() {
+			if (this.bet >= this.maxBet) {
+				this.bet = this.eachBet;
+			} else {
+				this.bet += this.eachBet;
+			}
+		},
+		// 借貸
+		loanMoney: function() {
+			this.loan += 1000;
+			this.totalMoney += 1000;
+		},
+		// 扣下注金額
+		subBet: function() {
+			// 扣錢
+			this.totalMoney -= this.bet;
+			// 累加投注
+			this.totalBet += this.bet;
+		},
+		// 增加贏錢
+		addWin: function(win) {
+			if (win <= 0) {
+				return;
+			}
+			this.totalWin += win;
+			this.totalMoney += win;
+		},
+		// 轉動盤面
+		spin: function() {
+			if (this.totalMoney < this.bet) {
+				alert('Not enough money');
+				return;
+			} else {
+				this.subBet();
+			}
+			// 當前得分歸零
+			this.win = 0;
+			// 計算盤面
+			this.screen = this.calculateScreen();
+			this.createSpinAnimationTimer();
+			console.log('screen: ' + this.screen);
+		},
+		// 計算隨機盤面
+		calculateScreen: function() {
+			// console.log('calculateScreen...')
+			var win = 0;
 
-      // 取得盤面
-      var screenSize = this.ribbonSize * this.ribbonLength;
-      var screen = [];
-      for (var i = 0; i < screenSize; i++) {
-        var index = Math.floor(Math.random() * this.symbols.length);
-        screen.push(this.symbols[index][0]);
-      }
-      console.log('screen: '+screen);
+			// 取得盤面
+			var screenSize = this.ribbonSize * this.ribbonLength;
+			var screen = [];
+			for (var i = 0; i < screenSize; i++) {
+				var index = Math.floor(Math.random() * this.symbols.length);
+				screen.push(this.symbols[index][0]);
+			}
+			return screen;
+		},
+		// 取得中獎線
+		getSymbolLines: function(screen) {
+			var bingoLines = [];
+			// 每一條線
+			for (var lineIndex = 0; lineIndex < this.bingoIndex.length; lineIndex++) {
+				var indexArr = this.bingoIndex[lineIndex];
+				var symbol = 0;
+				var connectSize = 1;
+				// 線上每一個位置
+				for (var idx = 0; idx < indexArr.length; idx++) {
+					var ribbonIdx = indexArr[idx];
+					if (idx == 0) {
+						symbol = screen[ribbonIdx];
+						continue;
+					}
+					var curSymbol = screen[ribbonIdx];
+					if (curSymbol == symbol) {
+						connectSize++;
+					} else {
+						break;
+					}
+				}
 
-      // 計算連線
-      var bingoLines = this.getSymbolLines(screen);
-      console.log('bingoLines: '+bingoLines);
-      // 計算得分
-      var winMoney = this.getBingoMoney(bingoLines);
-      console.log('winMoney: '+winMoney);
-      // 重整盤面
-      this.arrangeRibbons(screen);
-      return winMoney;
-    },
-    // 取得贏線
-    getSymbolLines: function(screen){
-      var bingoLines = [];
-      // 每一條線
-      for(var lineIndex = 0; lineIndex < this.bingoIndex.length; lineIndex++){
-        var indexArr = this.bingoIndex[lineIndex];
-        var symbol = 0;
-        var connectSize = 1;
-        // 線上每一個位置
-        for(var idx = 0; idx < indexArr.length; idx ++){
-          var ribbonIdx = indexArr[idx];
-          if(idx == 0){
-            symbol = screen[ribbonIdx];
-            continue;
-          }
-          var curSymbol = screen[ribbonIdx];
-          if(curSymbol == symbol){
-            connectSize ++;
-          } else {
-            break;
-          }
-        }
+				// 先排除少於3的
+				if (connectSize >= 3) {
+					bingoLines.push(symbol + '-' + connectSize);
+				}
 
-        bingoLines.push(symbol + '-' + connectSize);  
-      }
-      return bingoLines;
-    },
-    // 取得中獎金額
-    getBingoMoney: function(bingoLines){
-      var bingoMoney = 0;
+			}
+			return bingoLines;
+		},
+		// 取得中獎金額
+		getBingoMoney: function(bingoLines) {
+			var bingoMoney = 0;
 
-      // 查看每一條線
-      for (var i = bingoLines.length - 1; i >= 0; i--) {
-        var bingoKey = bingoLines[i];
-        // 從中獎目錄尋找
-        for (var i = this.symbolOdds.length - 1; i >= 0; i--) {
-          var checkKey = this.symbolOdds[i][0];
-          if(bingoKey == checkKey){
-            bingoMoney += (this.bet * this.symbolOdds[i][1]);
-          }
-        }
-      }
+			// 查看每一條線
+			for (var i = bingoLines.length - 1; i >= 0; i--) {
+				var bingoKey = bingoLines[i];
+				// 從中獎目錄尋找
+				for (var i = this.symbolOdds.length - 1; i >= 0; i--) {
+					var checkKey = this.symbolOdds[i][0];
+					if (bingoKey == checkKey) {
+						bingoMoney += (this.bet * this.symbolOdds[i][1]);
+					}
+				}
+			}
 
-      return bingoMoney;
-    },
-    // 把盤面填入
-    arrangeRibbons: function(screen){
-      var ribbonIdx = 0;
-      for(var idx = 0; idx < screen.length; idx++){
-        var idxInRibbon = idx % this.ribbonLength;
-        if(idx != 0 && idxInRibbon == 0){
-          ribbonIdx++;
-        }
+			return bingoMoney;
+		},
+		// 重新設定顯示盤面
+		arrangeRibbons: function(screen) {
+			var ribbonIdx = 0;
+			for (var idx = 0; idx < screen.length; idx++) {
+				var idxInRibbon = idx % this.ribbonLength;
+				if (idx != 0 && idxInRibbon == 0) {
+					ribbonIdx++;
+				}
 
-        this.ribbons[ribbonIdx][idxInRibbon] = screen[idx];
-      }
-    },
+				this.ribbons[ribbonIdx][idxInRibbon] = screen[idx];
+			}
+		},
+		// 取得顯示的圖標
+		getShowSymbol: function(symbol) {
+			var symbols = this.symbols;
+			for (symbolSet of symbols) {
+				if (symbolSet[0] == symbol) {
+					return symbolSet[1];
+				}
+			}
+			return 'unknownSymbol';
+		},
+		// 取得tick的間隔時間
+		getTickerGap: function() {
+			var tickGap = this.animationTickGap;
+			if (this.isFastSpin) {
+				tickGap = tickGap / 10;
+			}
+			return tickGap;
+		},
+		// 取得動畫時間
+		getAnimationLength: function() {
+			var length = this.animationLength;
+			if (this.isFastSpin) {
+				length = length / 10;
+			}
+			return length;
+		},
+		// 建立動畫演出timer
+		createSpinAnimationTimer: function() {
+			if (this.isAnimation) {
+				return;
+			} else {
+				this.animationTicker = 0;
+				this.isAnimation = true;
+			}
+			this.animationTimer = setInterval(this.animationTimerTick, this.getTickerGap());
+		},
+		// 動畫演出每一次tick
+		animationTimerTick: function() {
+			var animationTicker = this.animationTicker;
+			// console.log('animationTimerTick...' + animationTicker);
+			// 結束動畫與刷新資訊
+			if (animationTicker >= this.getAnimationLength()) {
+				clearInterval(this.animationTimer);
+				this.isAnimation = false;
+				this.showFinalDatas();
+				return;
+			} else {
+				this.animationTicker += this.getTickerGap();
+			}
 
-  }
+			// 重整假的盤面
+			this.arrangeRibbons(this.calculateScreen());
+			// 強制重整
+			this.$forceUpdate();
+		},
+		// 顯示最後畫面內容
+		showFinalDatas: function() {
+			var screen = this.screen;
+			// 計算連線
+			var bingoLines = this.getSymbolLines(screen);
+			console.log('bingoLines: ' + bingoLines);
+			// 計算得分
+			var winMoney = this.getBingoMoney(bingoLines);
+			this.win = winMoney;
+			console.log('winMoney: ' + winMoney);
+			// 重整盤面
+			this.arrangeRibbons(screen);
+			// 累加得分
+			this.addWin(winMoney);
+		},
+
+	}
 });
