@@ -1,29 +1,36 @@
 <!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <title>SlotMachine</title>
-  <script src="https://unpkg.com/vue/dist/vue.js"></script>
-  <link rel="stylesheet" href="assets/css/main.css"/>
-</head>
-<body>	
-  <div id="SlotMachine">
-    <p>Welcom To SlotMachine</p>
-    <ul>
-      <template>
-        <template v-for="ribbon in ribbons">
-          <button v-for="symbol in ribbon" style="width: 50px;">{{getSymbolText(symbol)}}</button></br>
-        </template>
-      </template>
-    </ul>
+	<head>
+		<meta charset="utf-8">
+		<title>SlotMachine</title>
+		<script src="https://unpkg.com/vue/dist/vue.js"></script>
+		<link rel="stylesheet" href="assets/css/main.css" />
+	</head>
+	<body>
+		<div id="SlotMachine">
+			<div class="inner">
+				<h3>Welcom To SlotMachine</h3>
+				<ul>
+					<template>
+						<template v-for="ribbon in ribbons">
+							<button v-for="symbol in ribbon" style="width: 50px;">{{getShowSymbol(symbol)}}</button></br>
+						</template>
+					</template>
+					<h3>Score: {{win}}</h3>
+				</ul>
 
-    <button id="btnBet" v-on:click="setBet" class="button special" style="width: 80px;">Bet: {{ bet }}</button>
-    <button id="btnSpin" v-on:click="spin" class="button special" style="width: 80px;">Spin</button>
-    <button id="btnAddMoney" v-on:click="addMoney" class="button small" style="width: 150px;">Add Money</button>
-    <div>TotalMoney: {{ totalMoney }} (Loan: {{ loan }})</div>
-    <div>TotalWin: {{ totalWin }}</div>
-    <div>TotalBet: {{ totalBet }}</div>
- </div>
- <script type="text/javascript" src="js/SlotMachine.js"></script>
-</body>
+				<input id="checkbox" type="checkbox" v-model="isFastSpin" :disabled="isAnimation">
+				<label for="checkbox">FastSpin</label></br>
+
+				<button id="btnBet" v-on:click="setBet" class="button special" style="width: 80px;" :disabled="isAnimation">Bet: {{ bet }}</button>
+				<button id="btnSpin" v-on:click="spin" class="button special" style="width: 80px" :disabled="isAnimation">Spin</button>
+				<button id="btnAddMoney" v-on:click="loanMoney" class="button small" style="width: 120px;" :disabled="isAnimation">Loan
+					Money</button>
+				<div>TotalMoney: {{ totalMoney }} (Loan: {{ loan }})</div>
+				<div>TotalWin: {{ totalWin }}</div>
+				<div>TotalBet: {{ totalBet }}</div>
+			</div>
+		</div>
+		<script type="text/javascript" src="js/SlotMachine.js"></script>
+	</body>
 </html>
