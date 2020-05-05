@@ -25,13 +25,21 @@
 				<label for="checkbox">FastSpin</label></br>
 
 				<button id="btnBet" v-on:click="setBet" class="button special" style="width: 80px;" :disabled="isAnimation">Bet: {{ bet }}</button>
-				<button id="btnSpin" v-on:click="spin" class="button special" style="width: 80px" :disabled="isAnimation">Spin</button>
+				<button id="btnSpin" v-on:click="spin(false)" class="button special" style="width: 80px" :disabled="isAnimation">Spin</button>
 				<button id="btnAddMoney" v-on:click="loanMoney" class="button small" style="width: 120px;" :disabled="isAnimation">Loan
 					Money</button>
 
 				<div>TotalMoney: {{ totalMoney }} (Loan: {{ loan }})</div>
 				<div>TotalWin: {{ totalWin }}</div>
 				<div>TotalBet: {{ totalBet }}</div>
+
+				<hr />
+				<p>
+					<blockquote>
+						<h1>Debug Screen</h1>
+						<input type="text" v-model="debugScreen" v-on:keyup.enter="spin(true)" style="width: 350px;" placeholder="split symbols with ',' press Enter to submit"/>
+					</blockquote>
+				</p>
 
 			</div>
 		</div>
