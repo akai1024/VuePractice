@@ -118,7 +118,7 @@ var slotMachine = new Vue({
 			// 圖標內文
 			let textX = x + this.symbolSize / 2;
 			let textY = y + this.symbolSize / 2;
-			context.fillStyle = "#5385c1";
+			context.fillStyle = "#629ee3";
 			context.font = "40px Arial";
 			context.textAlign = "center";
 			context.textBaseline = "middle";
@@ -225,7 +225,7 @@ var slotMachine = new Vue({
 		getBingoMoney: function(bingoLines) {
 			var bingoMoney = 0;
 			// 查看每一條線
-			for (var i = bingoLines.length; i >= 0; i--) {
+			for (var i = bingoLines.length - 1; i >= 0; i--) {
 				var bingoKey = bingoLines[i];
 				// 從中獎目錄尋找
 				for (var j = this.symbolOdds.length - 1; j >= 0; j--) {
