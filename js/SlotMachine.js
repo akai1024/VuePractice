@@ -48,6 +48,8 @@ var slotMachine = new Vue({
 		],
 		// 該局最終盤面
 		screen: [],
+		// 測試用的盤面
+		debugScreen: null,
 
 		// 是否正在演出
 		isAnimation: false,
@@ -94,7 +96,7 @@ var slotMachine = new Vue({
 		// 鍵盤事件
 		keyPressEvt: function(e) {
 			// SpaceBar
-			if (e.keyCode == 32) {
+			if (e.keyCode == 32 && !this.isAnimation) {
 				this.spin();
 			}
 		},
@@ -153,7 +155,7 @@ var slotMachine = new Vue({
 			this.totalMoney += win;
 		},
 		// 轉動盤面
-		spin: function() {
+		spin: function(isDebug) {
 			if (this.totalMoney < this.bet) {
 				alert('Not enough money');
 				return;
@@ -163,9 +165,42 @@ var slotMachine = new Vue({
 			// 當前得分歸零
 			this.win = 0;
 			// 計算盤面
-			this.screen = this.calculateScreen();
+			var screen = null;
+			if (isDebug) {
+				// 測試用的盤面
+				let debugScreen = this.getDebugScreen();
+				if (debugScreen) {
+					screen = debugScreen;
+				}
+			}
+			
+			if (screen) {
+				this.screen = screen;
+			} else {
+				this.screen = this.calculateScreen();
+			}
+
 			this.createSpinAnimationTimer();
 			console.log('screen: ' + this.screen);
+		},
+		// 取得測試盤面
+		getDebugScreen: function() {
+			var screen = this.debugScreen;
+			if (this.isLegalScreenStr(screen)) {
+				return screen.split(',');
+			}
+			return null;
+		},
+		// 是否合法的盤面字串
+		isLegalScreenStr: function(screen) {
+			if (screen) {
+				let checkScreen = screen.split(',');
+				let symbols = this.ribbonSize * this.ribbonLength;
+				if (checkScreen.length == symbols) {
+					return true;
+				}
+			}
+			return false;
 		},
 		// 計算隨機盤面
 		calculateScreen: function() {
@@ -263,7 +298,7 @@ var slotMachine = new Vue({
 					return symbolSet[1];
 				}
 			}
-			return 'unknownSymbol';
+			return '?';
 		},
 		// 取得tick的間隔時間
 		getTickerGap: function() {
