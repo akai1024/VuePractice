@@ -116,8 +116,8 @@ var slotMachine = new Vue({
 			context.lineWidth = 3;
 			context.strokeRect(x, y, symbolSize, symbolSize);
 			// 圖標內文
-			let textX = x + this.symbolSize / 2;
-			let textY = y + this.symbolSize / 2;
+			let textX = x + symbolSize / 2;
+			let textY = y + symbolSize / 2;
 			context.fillStyle = "#629ee3";
 			context.font = "40px Arial";
 			context.textAlign = "center";
