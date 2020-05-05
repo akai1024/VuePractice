@@ -37,7 +37,7 @@ var slotMachine = new Vue({
 			[0, 1, 2],
 			[0, 4, 8],
 			[3, 4, 5],
-			[6, 4, 3],
+			[6, 4, 2],
 			[6, 7, 8],
 		],
 		// 當前排列帶
@@ -61,9 +61,31 @@ var slotMachine = new Vue({
 		animationLength: 1500,
 		// 快速轉輪
 		isFastSpin: false,
+
+		// 用畫布呈現盤面
+		slotScreenContext: null,
+		symbolSize: 50,
 	},
 	created() {
 		window.addEventListener('keypress', this.keyPressEvt);
+	},
+	mounted() {
+		// 設定畫布
+		let canvas = this.$refs['SlotScreen'];
+		canvas.width = this.symbolSize * this.ribbonLength;
+		canvas.height = this.symbolSize * this.ribbonSize;
+
+		let ctx = canvas.getContext('2d');
+		ctx.lineCap = "round";
+		ctx.lineJoin = "round";
+		this.slotScreenContext = ctx;
+
+		// 填上初始的盤面
+		for (var rIdx = 0; rIdx < this.ribbons.length; rIdx++) {
+			for (var cIdx = 0; cIdx < this.ribbons[rIdx].length; cIdx++) {
+				this.drawSymbol(rIdx, cIdx, this.ribbons[rIdx][cIdx], false);
+			}
+		}
 	},
 	destroyed() {
 		window.removeEventListener('keypress', this.keyPressEvt);
@@ -75,6 +97,32 @@ var slotMachine = new Vue({
 			if (e.keyCode == 32) {
 				this.spin();
 			}
+		},
+		// 畫圖標
+		drawSymbol: function(rowIdx, colIdx, symbol, isBingo) {
+			let symbolSize = this.symbolSize;
+			let context = this.slotScreenContext;
+			let x = symbolSize * colIdx;
+			let y = symbolSize * rowIdx;
+			// 填滿矩形
+			if (isBingo) {
+				context.fillStyle = "#df595b";
+			} else {
+				context.fillStyle = "#5a5a5a";
+			}
+			context.fillRect(x, y, symbolSize, symbolSize);
+			// 框線
+			context.strokeStyle = "black";
+			context.lineWidth = 3;
+			context.strokeRect(x, y, symbolSize, symbolSize);
+			// 圖標內文
+			let textX = x + this.symbolSize / 2;
+			let textY = y + this.symbolSize / 2;
+			context.fillStyle = "#5385c1";
+			context.font = "40px Arial";
+			context.textAlign = "center";
+			context.textBaseline = "middle";
+			context.fillText(this.getShowSymbol(symbol), textX, textY);
 		},
 		// 設定下注
 		setBet: function() {
@@ -134,16 +182,20 @@ var slotMachine = new Vue({
 			return screen;
 		},
 		// 取得中獎線
-		getSymbolLines: function(screen) {
+		getBingoLines: function(screen) {
 			var bingoLines = [];
+			var bingoIndexes = [];
 			// 每一條線
 			for (var lineIndex = 0; lineIndex < this.bingoIndex.length; lineIndex++) {
 				var indexArr = this.bingoIndex[lineIndex];
 				var symbol = 0;
 				var connectSize = 1;
+				var lineIndexes = [];
 				// 線上每一個位置
 				for (var idx = 0; idx < indexArr.length; idx++) {
 					var ribbonIdx = indexArr[idx];
+					// 紀錄在盤面的位置
+					lineIndexes.push(ribbonIdx);
 					if (idx == 0) {
 						symbol = screen[ribbonIdx];
 						continue;
@@ -159,23 +211,29 @@ var slotMachine = new Vue({
 				// 先排除少於3的
 				if (connectSize >= 3) {
 					bingoLines.push(symbol + '-' + connectSize);
+					// 添加所有中獎位置
+					bingoIndexes = bingoIndexes.concat(lineIndexes);
 				}
 
 			}
-			return bingoLines;
+			return {
+				bingoLines: bingoLines,
+				bingoIndexes: bingoIndexes
+			};
 		},
 		// 取得中獎金額
 		getBingoMoney: function(bingoLines) {
 			var bingoMoney = 0;
-
 			// 查看每一條線
-			for (var i = bingoLines.length - 1; i >= 0; i--) {
+			for (var i = bingoLines.length; i >= 0; i--) {
 				var bingoKey = bingoLines[i];
 				// 從中獎目錄尋找
-				for (var i = this.symbolOdds.length - 1; i >= 0; i--) {
-					var checkKey = this.symbolOdds[i][0];
+				for (var j = this.symbolOdds.length - 1; j >= 0; j--) {
+					var checkKey = this.symbolOdds[j][0];
 					if (bingoKey == checkKey) {
-						bingoMoney += (this.bet * this.symbolOdds[i][1]);
+						var lineMoney = this.bet * this.symbolOdds[j][1];
+						bingoMoney += lineMoney;
+						console.log(checkKey + ':' + lineMoney);
 					}
 				}
 			}
@@ -183,15 +241,18 @@ var slotMachine = new Vue({
 			return bingoMoney;
 		},
 		// 重新設定顯示盤面
-		arrangeRibbons: function(screen) {
+		arrangeRibbons: function(screen, bingoIndexes) {
 			var ribbonIdx = 0;
 			for (var idx = 0; idx < screen.length; idx++) {
 				var idxInRibbon = idx % this.ribbonLength;
 				if (idx != 0 && idxInRibbon == 0) {
 					ribbonIdx++;
 				}
-
+				// 更新盤面
 				this.ribbons[ribbonIdx][idxInRibbon] = screen[idx];
+				// 畫盤面
+				var isBingo = bingoIndexes && bingoIndexes.includes(idx);
+				this.drawSymbol(ribbonIdx, idxInRibbon, screen[idx], isBingo);
 			}
 		},
 		// 取得顯示的圖標
@@ -253,14 +314,14 @@ var slotMachine = new Vue({
 		showFinalDatas: function() {
 			var screen = this.screen;
 			// 計算連線
-			var bingoLines = this.getSymbolLines(screen);
-			console.log('bingoLines: ' + bingoLines);
+			var bingos = this.getBingoLines(screen);
+			console.log('bingos: ' + JSON.stringify(bingos));
 			// 計算得分
-			var winMoney = this.getBingoMoney(bingoLines);
+			var winMoney = this.getBingoMoney(bingos.bingoLines);
 			this.win = winMoney;
 			console.log('winMoney: ' + winMoney);
 			// 重整盤面
-			this.arrangeRibbons(screen);
+			this.arrangeRibbons(screen, bingos.bingoIndexes);
 			// 累加得分
 			this.addWin(winMoney);
 		},
