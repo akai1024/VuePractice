@@ -145,25 +145,16 @@ var snake = new Vue({
 
 			// 更新當前面向
 			this.faced = this.nextFaced;
-
-			// 先反轉
-			body.reverse();
-			// 將最新的頭接在陣列最後
-			body.push(newHead);
-			// 反轉回來
-			body.reverse();
-			
+			// 把新的頭放在身體最前面
+			body.unshift(newHead);
 			// 畫上新的頭
 			this.drawBlock(this.fieldCtx, this.ObjectColor, newHead[0], newHead[1]);
 			
-			// 如果沒吃到食物移除最後一個位置
+			// 如果沒吃到食物移除尾巴
 			if (!isGainLength) {
 				var tail = body.pop();
 				this.drawBlock(this.fieldCtx, this.fieldColor, tail[0], tail[1]);
 			}
-
-			// 刷新畫面
-			// this.render();
 		},
 		// 是否碰撞到場地邊緣
 		isReachEdge(head) {
