@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>SnakeGame</title>
+		<script src="https://unpkg.com/vue/dist/vue.js"></script>
+		<link rel="stylesheet" href="assets/css/main.css" />
+	</head>
+	<body>
+		<div id="Snake">
+			<canvas ref="field"></canvas>
+			<br />
+			<button @click="start" :disabled="isGaming || isGameOver">StartGame</button>
+			<button @click="newGame" :disabled="!isGameOver">NewGame</button>
+			<h3>Speed: {{speed}} / Score: {{score}} / HighScore: {{highScore}}</h3>
+		</div>
+		<script type="text/javascript" src="js/Snake.js"></script>
+	</body>
+</html>
