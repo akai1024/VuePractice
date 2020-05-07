@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<title>MonopolyBoardGame</title>
+		<script src="https://unpkg.com/vue/dist/vue.js"></script>
+		<link rel="stylesheet" href="assets/css/main.css" />
+	</head>
+	<body style="background-color: #ddfafa;">
+		<div id="Monopoly" align="center">
+			<h3>MonopolyBoardGame</h3>
+			<div class="row">
+				<div class="4u 12u$(medium)">
+					<canvas ref="board"></canvas>
+				</div>
+				<div class="4u 12u$(medium)">
+					<template v-for="player in players">
+						<h3 :style="{color:player.color,fontWeight:'bold'}">Player: {{player.name}} / Money: {{player.money}}</h3>
+					</template>
+					<template v-for="player in brokePlayers">
+						<h1 :style="{color:player.color,fontWeight:'bold'}">(BROKE)Player: {{player.name}} / Money: {{player.money}}</h1>
+					</template>
+				</div>
+				<div class="4u 12u$(medium)" align="left">
+					<button @click="startGame" :disabled="isGaming">StartGame</button><br />
+					<hr />
+					<h3 v-if="isGaming">TurnPlayer: {{getTurnPlayerName()}}</h3>
+					<button @click="playerSetDice" :disabled="!isGaming || isBuying">SetDice({{getTurnPlayerDiceSize()}})</button><br />
+					<button @click="playerRollDice" :disabled="!isGaming || isBuying">RollDice</button><br />
+					<hr />
+					<button @click="playerBuyOrUpgrade" :disabled="!isGaming || !isCanBuyOrUpgrade()">BuyOrUpgrade</button><br />
+					<button @click="playerGiveUpBuying" :disabled="!isGaming || !isBuying">GiveUpBuying</button><br />
+				</div>
+			</div>
+
+			<hr />
+		</div>
+		<script type="text/javascript" src="js/Monopoly/Player.js"></script>
+		<script type="text/javascript" src="js/Monopoly/Property.js"></script>
+		<script type="text/javascript" src="js/Monopoly/Dictionary.js"></script>
+		<script type="text/javascript" src="js/Monopoly/Board.js"></script>
+	</body>
+</html>
