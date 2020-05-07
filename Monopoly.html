@@ -22,14 +22,16 @@
 					</template>
 				</div>
 				<div class="4u 12u$(medium)" align="left">
-					<button @click="startGame" :disabled="isGaming">StartGame</button><br />
+					<button class="button special icon fa-at" @click="startGame" :disabled="isGaming">StartGame</button><br />
 					<hr />
-					<h3 v-if="isGaming">TurnPlayer: {{getTurnPlayerName()}}</h3>
-					<button @click="playerSetDice" :disabled="!isGaming || isBuying">SetDice({{getTurnPlayerDiceSize()}})</button><br />
-					<button @click="playerRollDice" :disabled="!isGaming || isBuying">RollDice</button><br />
-					<hr />
-					<button @click="playerBuyOrUpgrade" :disabled="!isGaming || !isCanBuyOrUpgrade()">BuyOrUpgrade</button><br />
-					<button @click="playerGiveUpBuying" :disabled="!isGaming || !isBuying">GiveUpBuying</button><br />
+					<div v-if="turnPlayer">
+						<h3 v-if="isGaming" :style="{color:turnPlayer.color,fontWeight:'bold'}">TurnPlayer: {{turnPlayer.name}} / Money: {{turnPlayer.money}}</h3>
+						<button class="button special big icon fa-crosshairs" @click="playerRollDice" :disabled="!isGaming || isBuying">RollDice</button>
+						<button class="button special icon fa-check" @click="playerSetDice" :disabled="!isGaming || isBuying">SetDice({{turnPlayer.diceSize}})</button>
+						<hr />
+						<button class="button special big icon fa-angle-double-down" @click="playerBuyOrUpgrade" :disabled="!isGaming || !isCanBuyOrUpgrade()">BuyOrUpgrade(cost: {{getTurnPlayerLocatedPropertyCost()}})</button><br />
+						<button class="button icon fa-arrow-right" @click="playerGiveUpBuying" :disabled="!isGaming || !isBuying">GiveUpBuying</button>
+					</div>
 				</div>
 			</div>
 

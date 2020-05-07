@@ -31,7 +31,7 @@ var snake = new Vue({
 		brokePlayers: [],
 		playerMap: null,
 		isGaming: false,
-		turnIdx: -1,
+		turnPlayer: null,
 		isBuying: false,
 		isNeedResetCity: false,
 
@@ -194,7 +194,7 @@ var snake = new Vue({
 		// 重置整個城市
 		resetCity() {
 			this.isGaming = false;
-			this.turnIdx = -1;
+			this.turnPlayer = null;
 			// 建立四位玩家
 			this.players = [];
 			this.playerMap = new Map();
@@ -316,38 +316,18 @@ var snake = new Vue({
 
 		nextPlayer() {
 			this.isBuying = false;
-			this.turnIdx++;
-			if (this.turnIdx >= this.players.length) {
-				this.turnIdx = 0;
+			if (this.turnPlayer) {
+				this.players.push(this.turnPlayer);
 			}
-		},
-
-		getTurnPlayer() {
-			return this.players[this.turnIdx];
-		},
-
-		getTurnPlayerName() {
-			let player = this.getTurnPlayer();
-			if (player) {
-				return player.name
-			}
-			return 'unknown';
-		},
-
-		getTurnPlayerDiceSize() {
-			let player = this.getTurnPlayer();
-			if (player) {
-				return player.diceSize
-			}
-			return 0;
+			this.turnPlayer = this.players.shift();
 		},
 
 		playerSetDice() {
-			this.getTurnPlayer().setDiceSize();
+			this.turnPlayer.setDiceSize();
 		},
 
 		playerRollDice() {
-			var player = this.getTurnPlayer();
+			var player = this.turnPlayer;
 			let moves = player.rollDice();
 			let nextProperty = this.getNextProperty(player, moves);
 			console.log('TurnPlayer: ' + player.name + ' moves ' + moves + ' to ' + JSON.stringify(nextProperty));
@@ -375,8 +355,10 @@ var snake = new Vue({
 				// 破產了
 				if (player.isBroke()) {
 					alert('Player ' + player.name + ' is broke!');
-					nextProperty.removePlayer(player);
 					this.playerBroke(player);
+					nextProperty.removePlayer(player);
+					// 重新繪製該財產
+					this.drawBlockWithProperty(nextProperty);
 					return;
 				}
 			}
@@ -392,16 +374,27 @@ var snake = new Vue({
 		getNextProperty(player, moves) {
 			var nextPath = player.path + moves;
 			// 通過起點
-			if (nextPath >= this.pathRoute.length) {
+			if (nextPath > this.pathRoute.length) {
 				nextPath = nextPath % this.pathRoute.length;
 				player.addMoney(this.roundBonus);
 			}
 			return this.pathRoute[nextPath - 1];
 		},
 
+		getTurnPlayerLocatedPropertyCost() {
+			if (this.isBuying) {
+				let player = this.turnPlayer;
+				let property = this.pathRoute[player.path - 1];
+				if (property.level < this.propertyMaxLevel) {
+					return property.getCost();
+				}
+			}
+			return '-';
+		},
+
 		isCanBuyOrUpgrade() {
 			if (this.isBuying) {
-				let player = this.getTurnPlayer();
+				let player = this.turnPlayer;
 				let property = this.pathRoute[player.path - 1];
 				if (property.level < this.propertyMaxLevel) {
 					return property.isAvailableForBuying(player);
@@ -412,7 +405,7 @@ var snake = new Vue({
 
 		playerBuyOrUpgrade() {
 			if (this.isCanBuyOrUpgrade()) {
-				let player = this.getTurnPlayer();
+				let player = this.turnPlayer;
 				let property = this.pathRoute[player.path - 1];
 				player.buyOrUpdate(property);
 				property.setOwner(player);
@@ -452,8 +445,8 @@ var snake = new Vue({
 
 		playerBroke(player) {
 			this.resetPlayersProperties(player);
-			this.players.splice(this.turnIdx, 1);
 			this.brokePlayers.push(player);
+			this.turnPlayer = null;
 
 			if (this.players.length == 1) {
 				alert('GameOver! Winner is ' + this.players[0].name + '!');
